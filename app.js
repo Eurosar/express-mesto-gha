@@ -3,7 +3,6 @@ const mongoose = require('mongoose');
 const bodyParser = require('body-parser');
 const router = require('./routes/index');
 const errorHandler = require('./middleware/ErrorHandlingMiddleware');
-// const idHandler = require('./middleware/IdHandlingMiddleware');
 
 // Слушаем 3000 порт
 const { PORT = 3000 } = process.env;
