@@ -63,13 +63,17 @@ module.exports.deleteCard = (req, res, next) => {
         return next(ApiError.NotFoundError('Карточка с указанным _id не найдена.'));
       }
       // Если найдена, то возвращаем статус 204
-      return res.status(204).send({ data: card });
+      return res.status(200).send({ data: card });
     })
     // Иначе вызываем ошибку 500
     .catch((err) => {
-      res.send(err);
-      next();
-      // next(ApiError.InternalError('Произошла ошибка'));
+      // Если ошибка относится к CastError
+      if (err.name === 'CastError') {
+        // Вернем 400 ошибку
+        return next(ApiError.BadRequestError('Некорректный id пользователя'));
+      }
+      // Иначе возвращаем ошибку 500
+      return next(ApiError.InternalError('Произошла ошибка'));
     });
 };
 
