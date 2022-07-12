@@ -65,7 +65,15 @@ module.exports.getUser = (req, res, next) => {
       return res.status(200).send({ data: user });
     })
     // Иначе вернем 500 ошибку
-    .catch(() => next(ApiError.InternalError('Произошла ошибка')));
+    .catch((err) => {
+      // Если ошибка относится к CastError
+      if (err.name === 'CastError') {
+        // Вернем 400 ошибку
+        return next(ApiError.BadRequestError('Некорректный id пользователя'));
+      }
+      // Иначе вернем 500 ошибку
+      return next(ApiError.InternalError('Произошла ошибка'));
+    });
 };
 
 /**

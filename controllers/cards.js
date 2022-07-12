@@ -97,6 +97,11 @@ module.exports.likeCard = (req, res, next) => {
         // то возвращаем ошибку 400
         return next(ApiError.BadRequestError('Переданы некорректные данные для постановки лайка.'));
       }
+      // Если ошибка относится к CastError
+      if (err.name === 'CastError') {
+        // Вернем 400 ошибку
+        return next(ApiError.BadRequestError('Некорректный id пользователя'));
+      }
       // Иначе возвращаем ошибку 500
       return next(ApiError.InternalError('Произошла ошибка'));
     });
@@ -131,6 +136,11 @@ module.exports.dislikeCard = (req, res, next) => {
       if (err.name === 'ValidationError') {
         // то возвращаем ошибку 400
         return next(ApiError.BadRequestError('Переданы некорректные данные для снятия лайка.'));
+      }
+      // Если ошибка относится к CastError
+      if (err.name === 'CastError') {
+        // Вернем 400 ошибку
+        return next(ApiError.BadRequestError('Некорректный id пользователя'));
       }
       // Иначе возвращаем ошибку 500
       return next(ApiError.InternalError('Произошла ошибка'));
