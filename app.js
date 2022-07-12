@@ -3,7 +3,7 @@ const mongoose = require('mongoose');
 const bodyParser = require('body-parser');
 const router = require('./routes/index');
 const errorHandler = require('./middleware/ErrorHandlingMiddleware');
-const idHandler = require('./middleware/IdHandlingMiddleware');
+// const idHandler = require('./middleware/IdHandlingMiddleware');
 
 // Слушаем 3000 порт
 const { PORT = 3000 } = process.env;
@@ -23,7 +23,13 @@ const app = express();
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
 // Временно хардкодим id пользователя
-app.use(idHandler);
+app.use((req, res, next) => {
+  req.user = {
+    _id: '62c60d7e9ee60e39f7b64774', // вставьте сюда _id созданного в предыдущем пункте пользователя
+  };
+
+  next();
+});
 // Выводим роуты
 app.use('/', router);
 // Обработка ошибок, должен быть последним Middleware
