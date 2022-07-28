@@ -1,3 +1,5 @@
+const bcrypt = require('bcryptjs');
+const jwt = require('jsonwebtoken');
 const User = require('../models/user');
 const ApiError = require('../errors/ApiError');
 
@@ -9,11 +11,21 @@ const ApiError = require('../errors/ApiError');
  */
 module.exports.createUser = (req, res, next) => {
   // Деструктурируем данные, полученные от клиента
-  const { name, about, avatar } = req.body;
+  const {
+    name, about, avatar, email, password,
+  } = req.body;
   // Создает пользователя в БД
-  User.create({ name, about, avatar })
+  bcrypt.hash(password, 10)
+    .then((hash) => User.create({
+      name, about, avatar, email, password: hash,
+    }))
     // Если все в порядке, вернем готовый объект со статусом 201
-    .then((user) => res.status(201).send({ data: user }))
+    .then((user) => res.status(201).send({
+      name: user.name,
+      about: user.about,
+      avatar: user.avatar,
+      email: user.email,
+    }))
     // Иначе
     .catch((err) => {
       // Если ошибка относится к ValidationError
@@ -21,8 +33,11 @@ module.exports.createUser = (req, res, next) => {
         // Возвращаем 400 ошибку
         return next(ApiError.BadRequestError('Переданы некорректные данные при создании пользователя.'));
       }
+      if (err.name === 'MongoError' && err.code === 11000) {
+        return next(ApiError.BadRequestError('Уже существует пользователь с данным email'));
+      }
       // Иначе возвращаем 500 ошибку
-      return next(ApiError.InternalError('Произошла ошибка'));
+      return next(err);
     });
 };
 
@@ -35,13 +50,16 @@ module.exports.createUser = (req, res, next) => {
 module.exports.getUsers = (req, res, next) => {
   // Ищем всех пользователей в БД
   User.find({})
-    // Если все в порядке
+  // Если все в порядке
     .then((users) => {
-      // Возвращаем массив пользователей
-      res.status(200).send({ data: users });
+      // Возвращаем массив пользователей (status 200 по умолчанию)
+      res.send({ data: users });
     })
-    // Иначе возвращаем 500 ошибку
-    .catch(() => next(ApiError.InternalError('Произошла ошибка')));
+  // Иначе возвращаем 500 ошибку
+  // Все ошибки, которые не являются инстансами класса ApiError,
+  // обработчик ошибок воспринимает как 500 ошибка,
+  // то можно в данном случае написать просто .catch(next)
+    .catch(next);
 };
 
 /**
@@ -61,8 +79,8 @@ module.exports.getUser = (req, res, next) => {
         // Вернем 404 ошибку
         return next(ApiError.NotFoundError('Пользователь по указанному _id не найден'));
       }
-      // Иначе вернем объект пользователя
-      return res.status(200).send({ data: user });
+      // Иначе вернем объект пользователя (status 200 по умолчанию)
+      return res.send({ data: user });
     })
     // Иначе вернем 500 ошибку
     .catch((err) => {
@@ -72,7 +90,38 @@ module.exports.getUser = (req, res, next) => {
         return next(ApiError.BadRequestError('Некорректный id пользователя'));
       }
       // Иначе вернем 500 ошибку
-      return next(ApiError.InternalError('Произошла ошибка'));
+      return next(err);
+    });
+};
+
+/**
+ * Получаем текущего(авторизованного) пользователя
+ * @param req
+ * @param res
+ * @param next
+ */
+module.exports.getUserInfo = (req, res, next) => {
+  const { userId } = req.user;
+  // Найдем пользователя по id
+  User.findById(userId)
+    .then((user) => {
+      // Если пользователь не найден
+      if (!user) {
+        // Вернем 404 ошибку
+        return next(ApiError.NotFoundError('Пользователь по указанному _id не найден'));
+      }
+      // Иначе вернем объект пользователя (status 200 по умолчанию)
+      return res.send({ data: user });
+    })
+    // Иначе вернем 500 ошибку
+    .catch((err) => {
+      // Если ошибка относится к CastError
+      if (err.name === 'CastError') {
+        // Вернем 400 ошибку
+        return next(ApiError.BadRequestError('Некорректный id пользователя'));
+      }
+      // Иначе вернем 500 ошибку
+      return next(err);
     });
 };
 
@@ -103,8 +152,8 @@ module.exports.updateUserProfile = (req, res, next) => {
         // Вернем 404 ошибку
         return next(ApiError.NotFoundError('Пользователь с указанным _id не найден.'));
       }
-      // Иначе вернем обновленный объект пользователя
-      return res.status(200).send({ data: user });
+      // Иначе вернем обновленный объект пользователя (status 200 по умолчанию)
+      return res.send({ data: user });
     })
     .catch((err) => {
       // Если ошибка относится к ValidationError
@@ -113,7 +162,7 @@ module.exports.updateUserProfile = (req, res, next) => {
         return next(ApiError.BadRequestError('Переданы некорректные данные при создании пользователя.'));
       }
       // Иначе вернем 500 ошибку
-      return next(ApiError.InternalError('Произошла ошибка'));
+      return next(err);
     });
 };
 
@@ -145,8 +194,8 @@ module.exports.updateUserAvatar = (req, res, next) => {
         // Вернем 404 ошибку
         return next(ApiError.NotFoundError('Пользователь с указанным _id не найден.'));
       }
-      // Иначе вернем обновленный объект пользователя
-      return res.status(200).send({ data: user });
+      // Иначе вернем обновленный объект пользователя (status 200 по умолчанию)
+      return res.send({ data: user });
     })
     .catch((err) => {
       // Если ошибка относится к ValidationError
@@ -155,6 +204,39 @@ module.exports.updateUserAvatar = (req, res, next) => {
         return next(ApiError.BadRequestError('Переданы некорректные данные при создании пользователя.'));
       }
       // Иначе вернем 500 ошибку
-      return next(ApiError.InternalError('Произошла ошибка'));
+      return next(err);
+    });
+};
+
+/**
+ * Авторизуем пользователя
+ * @param req
+ * @param res
+ * @returns {Promise<ResultType> | Promise<R> | Promise<any>}
+ */
+module.exports.login = (req, res) => {
+  const { email, password } = req.body;
+
+  return User.findUserByCredentials(email, password)
+    .then((user) => {
+      // Создадим токен
+      const token = jwt.sign(
+        { _id: user._id },
+        '5439a800e974a13f893bfbac5d9d9e5a81b8de4968ce72fe52b0737123281f0e',
+        { expiresIn: '7d' },
+      );
+
+      // Отправим токен клиенту и браузер сохранит его в куках
+      res
+        .cookie('jwt', token, {
+          maxAge: 3600000 * 24 * 7,
+          httpOnly: true,
+        })
+        .end();
+    })
+    .catch((err) => {
+      res
+        .status(401)
+        .send({ message: err.message });
     });
 };
