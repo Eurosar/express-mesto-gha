@@ -19,7 +19,7 @@ module.exports.updateUserProfileValidator = celebrate({
 
 module.exports.updateUserAvatarValidator = celebrate({
   body: Joi.object().keys({
-    avatar: Joi.string().uri().required(),
+    avatar: Joi.string().uri({ scheme: ['http', 'https'] }).required(),
   }),
 });
 
@@ -33,6 +33,12 @@ module.exports.loginValidator = celebrate({
 module.exports.createCardValidator = celebrate({
   body: Joi.object().keys({
     name: Joi.string().required().min(2).max(30),
-    link: Joi.string().required(),
+    link: Joi.string().uri({ scheme: ['http', 'https'] }).required(),
+  }),
+});
+
+module.exports.idValidator = celebrate({
+  params: Joi.object().keys({
+    id: Joi.string().alphanum().length(24),
   }),
 });

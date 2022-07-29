@@ -9,6 +9,11 @@ const userSchema = new mongoose.Schema({
   },
   link: {
     type: String,
+    validate: {
+      validator(v) {
+        return /^(https?:\/\/)?([\da-z.-]+)\.([a-z.]{2,6})(\/[\w.-]*)*\/?$/.test(v);
+      },
+    },
     required: true,
   },
   owner: {
