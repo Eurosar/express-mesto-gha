@@ -1,11 +1,13 @@
 const express = require('express');
 const mongoose = require('mongoose');
 const bodyParser = require('body-parser');
-// const cookieParser = require('cookie-parser');
+const cookieParser = require('cookie-parser');
+const { errors } = require('celebrate');
 const router = require('./routes/index');
 const auth = require('./middlewares/auth');
 const { login, createUser } = require('./controllers/users');
 const errorHandler = require('./middlewares/ErrorHandlingMiddleware');
+const { createUserValidator, loginValidator } = require('./validators/celebrate');
 
 // Слушаем 3000 порт
 const { PORT = 3000 } = process.env;
@@ -24,13 +26,17 @@ const app = express();
 // Запускаем парсер
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
+app.use(cookieParser());
 
 // Выводим роуты
-app.post('/signin', login);
-app.post('/signup', createUser);
+app.post('/signin', loginValidator, login);
+app.post('/signup', createUserValidator, createUser);
 app.use('/', auth, router);
 
-// Обработка ошибок, должен быть последним Middleware
+// Обработка ошибок
+// Обработка ошибок от валидатора входящих данных celebrate
+app.use(errors());
+// Централизованный обработчик, должен быть последним Middleware
 app.use(errorHandler);
 
 // Запускаем слушатель порта

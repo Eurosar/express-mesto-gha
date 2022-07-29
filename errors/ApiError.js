@@ -5,16 +5,24 @@ class ApiError extends Error {
     this.status = status;
   }
 
+  static Conflict(message) {
+    return new ApiError(409, message);
+  }
+
   static NotFoundError(message) {
     return new ApiError(404, message);
   }
 
-  static BadRequestError(message) {
-    return new ApiError(400, message);
+  static Forbidden(message) {
+    return new ApiError(403, message);
   }
 
-  static InternalError(message) {
-    return new ApiError(500, message);
+  static Unauthorized(message) {
+    return new ApiError(401, message);
+  }
+
+  static BadRequestError(message) {
+    return new ApiError(400, message);
   }
 }
 

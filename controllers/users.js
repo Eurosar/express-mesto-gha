@@ -101,9 +101,9 @@ module.exports.getUser = (req, res, next) => {
  * @param next
  */
 module.exports.getUserInfo = (req, res, next) => {
-  const { userId } = req.user;
+  const id = req.user._id;
   // Найдем пользователя по id
-  User.findById(userId)
+  User.findById(id)
     .then((user) => {
       // Если пользователь не найден
       if (!user) {
@@ -234,9 +234,5 @@ module.exports.login = (req, res) => {
         })
         .end();
     })
-    .catch((err) => {
-      res
-        .status(401)
-        .send({ message: err.message });
-    });
+    .catch((next) => next(ApiError.Unauthorized('Токен JWT отсутствует')));
 };
