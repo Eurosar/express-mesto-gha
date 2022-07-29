@@ -19,7 +19,7 @@ module.exports.updateUserProfileValidator = celebrate({
 
 module.exports.updateUserAvatarValidator = celebrate({
   body: Joi.object().keys({
-    avatar: Joi.string().required().uri(),
+    avatar: Joi.string().uri().required(),
   }),
 });
 
