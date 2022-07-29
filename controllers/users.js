@@ -34,7 +34,7 @@ module.exports.createUser = (req, res, next) => {
         return next(ApiError.BadRequestError('Переданы некорректные данные при создании пользователя.'));
       }
       if (err.name === 'MongoError' && err.code === 11000) {
-        return next(ApiError.BadRequestError('Уже существует пользователь с данным email'));
+        return next(ApiError.Conflict('Уже существует пользователь с данным email'));
       }
       // Иначе возвращаем 500 ошибку
       return next(err);
@@ -201,7 +201,7 @@ module.exports.updateUserAvatar = (req, res, next) => {
       // Если ошибка относится к ValidationError
       if (err.name === 'ValidationError') {
         // Вернем 400 ошибку
-        return next(ApiError.BadRequestError('Переданы некорректные данные при создании пользователя.'));
+        return next(ApiError.BadRequestError('Переданы некорректные данные URL.'));
       }
       // Иначе вернем 500 ошибку
       return next(err);
