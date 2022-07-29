@@ -229,7 +229,7 @@ module.exports.login = (req, res, next) => {
 
       // Отправим токен клиенту и браузер сохранит его в куках
       res
-        .send({ message: 'Вы успешно авторизованы' })
+        .send({ token })
         .cookie('jwt', token, {
           maxAge: 3600000 * 24 * 7,
           httpOnly: true,
