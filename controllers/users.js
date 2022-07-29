@@ -212,9 +212,10 @@ module.exports.updateUserAvatar = (req, res, next) => {
  * Авторизуем пользователя
  * @param req
  * @param res
+ * @param next
  * @returns {Promise<ResultType> | Promise<R> | Promise<any>}
  */
-module.exports.login = (req, res) => {
+module.exports.login = (req, res, next) => {
   const { email, password } = req.body;
 
   return User.findUserByCredentials(email, password)
@@ -234,5 +235,5 @@ module.exports.login = (req, res) => {
         })
         .end();
     })
-    .catch((next) => next(ApiError.Unauthorized('Токен JWT отсутствует')));
+    .catch(() => next(ApiError.Unauthorized('Неверный логин или пароль')));
 };
