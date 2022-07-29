@@ -24,7 +24,7 @@ module.exports.createCard = (req, res, next) => {
         return next(ApiError.BadRequestError('Переданы некорректные данные при создании карточки.'));
       }
       // Иначе возвращаем ошибку 500
-      return next(ApiError.InternalError('Произошла ошибка'));
+      return next(err);
     });
 };
 
@@ -38,9 +38,9 @@ module.exports.getCards = (req, res, next) => {
   // Находим все карточки в БД
   Card.find({})
     // Если ошибок нет, то возвращаем массив карточек со статусом 200
-    .then((cards) => res.status(200).send({ data: cards }))
+    .then((cards) => res.send({ data: cards }))
     // Иначе возвращаем ошибку 500
-    .catch(() => next(ApiError.InternalError('Произошла ошибка')));
+    .catch(next);
 };
 
 /**
@@ -86,10 +86,10 @@ module.exports.deleteCard = (req, res, next) => {
  */
 module.exports.likeCard = (req, res, next) => {
   // Деструктурируем введенные параметры в командную строку
-  const { cardId } = req.params;
+  const { id } = req.params;
   // Найдем и обновим нужную карточку по id
   Card.findByIdAndUpdate(
-    cardId,
+    id,
     { $addToSet: { likes: req.user._id } }, // добавить _id в массив, если его там нет
     { new: true },
   )
@@ -115,7 +115,7 @@ module.exports.likeCard = (req, res, next) => {
         return next(ApiError.BadRequestError('Некорректный id пользователя'));
       }
       // Иначе возвращаем ошибку 500
-      return next(ApiError.InternalError('Произошла ошибка'));
+      return next(err);
     });
 };
 
@@ -127,10 +127,10 @@ module.exports.likeCard = (req, res, next) => {
  */
 module.exports.dislikeCard = (req, res, next) => {
   // Деструктурируем введенные параметры в командную строку
-  const { cardId } = req.params;
+  const { id } = req.params;
   // Найдем и обновим нужную карточку по id
   Card.findByIdAndUpdate(
-    cardId,
+    id,
     { $pull: { likes: req.user._id } }, // убрать _id из массива
     { new: true },
   )
@@ -155,6 +155,6 @@ module.exports.dislikeCard = (req, res, next) => {
         return next(ApiError.BadRequestError('Некорректный id пользователя'));
       }
       // Иначе возвращаем ошибку 500
-      return next(ApiError.InternalError('Произошла ошибка'));
+      return next(err);
     });
 };
