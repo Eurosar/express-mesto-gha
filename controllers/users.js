@@ -4,6 +4,35 @@ const User = require('../models/user');
 const ApiError = require('../errors/ApiError');
 
 /**
+ * Найдем пользователя по id
+ * @param id
+ * @param res
+ * @param next
+ */
+function findUserById(id, res, next) {
+  User.findById(id)
+    .then((user) => {
+      // Если пользователь не найден
+      if (!user) {
+        // Вернем 404 ошибку
+        return next(ApiError.NotFoundError('Пользователь по указанному _id не найден'));
+      }
+      // Иначе вернем объект пользователя (status 200 по умолчанию)
+      return res.send({ data: user });
+    })
+    // Иначе вернем ошибки
+    .catch((err) => {
+      // Если ошибка относится к CastError
+      if (err.name === 'CastError') {
+        // Вернем 400 ошибку
+        return next(ApiError.BadRequestError('Некорректный id пользователя'));
+      }
+      // Иначе вернем 500 ошибку
+      return next(err);
+    });
+}
+
+/**
  * Создаем пользователя
  * @param req
  * @param res
@@ -14,12 +43,13 @@ module.exports.createUser = (req, res, next) => {
   const {
     name, about, avatar, email, password,
   } = req.body;
-  // Создает пользователя в БД
+  // Хешируем пароль и создаем пользователя в БД
   bcrypt.hash(password, 10)
     .then((hash) => User.create({
       name, about, avatar, email, password: hash,
     }))
     // Если все в порядке, вернем готовый объект со статусом 201
+    // но без пароля
     .then((user) => res.status(201).send({
       name: user.name,
       about: user.about,
@@ -33,7 +63,9 @@ module.exports.createUser = (req, res, next) => {
         // Возвращаем 400 ошибку
         return next(ApiError.BadRequestError('Переданы некорректные данные при создании пользователя.'));
       }
+      // Если ошибка относится к MongoError
       if (err.name === 'MongoError' && err.code === 11000) {
+        // Возвращаем 409 ошибку
         return next(ApiError.Conflict('Уже существует пользователь с данным email'));
       }
       // Иначе возвращаем 500 ошибку
@@ -72,26 +104,7 @@ module.exports.getUser = (req, res, next) => {
   // Деструктурируем введенные параметры в командную строку
   const { id } = req.params;
   // Найдем пользователя по id
-  User.findById(id)
-    .then((user) => {
-      // Если пользователь не найден
-      if (!user) {
-        // Вернем 404 ошибку
-        return next(ApiError.NotFoundError('Пользователь по указанному _id не найден'));
-      }
-      // Иначе вернем объект пользователя (status 200 по умолчанию)
-      return res.send({ data: user });
-    })
-    // Иначе вернем 500 ошибку
-    .catch((err) => {
-      // Если ошибка относится к CastError
-      if (err.name === 'CastError') {
-        // Вернем 400 ошибку
-        return next(ApiError.BadRequestError('Некорректный id пользователя'));
-      }
-      // Иначе вернем 500 ошибку
-      return next(err);
-    });
+  findUserById(id, res, next);
 };
 
 /**
@@ -103,26 +116,7 @@ module.exports.getUser = (req, res, next) => {
 module.exports.getUserInfo = (req, res, next) => {
   const id = req.user._id;
   // Найдем пользователя по id
-  User.findById(id)
-    .then((user) => {
-      // Если пользователь не найден
-      if (!user) {
-        // Вернем 404 ошибку
-        return next(ApiError.NotFoundError('Пользователь по указанному _id не найден'));
-      }
-      // Иначе вернем объект пользователя (status 200 по умолчанию)
-      return res.send({ data: user });
-    })
-    // Иначе вернем 500 ошибку
-    .catch((err) => {
-      // Если ошибка относится к CastError
-      if (err.name === 'CastError') {
-        // Вернем 400 ошибку
-        return next(ApiError.BadRequestError('Некорректный id пользователя'));
-      }
-      // Иначе вернем 500 ошибку
-      return next(err);
-    });
+  findUserById(id, res, next);
 };
 
 /**
@@ -134,7 +128,6 @@ module.exports.getUserInfo = (req, res, next) => {
 module.exports.updateUserProfile = (req, res, next) => {
   // Деструктурируем введенные данные клиентом
   const { name, about } = req.body;
-  // Временно присваиваем хардкорно id пользователя
   const id = req.user._id;
   // обновим имя найденного по id пользователя
   User.findByIdAndUpdate(
@@ -216,6 +209,7 @@ module.exports.updateUserAvatar = (req, res, next) => {
  * @returns {Promise<ResultType> | Promise<R> | Promise<any>}
  */
 module.exports.login = (req, res, next) => {
+  // Деструктурируем входящие от клиента данные
   const { email, password } = req.body;
 
   return User.findUserByCredentials(email, password)

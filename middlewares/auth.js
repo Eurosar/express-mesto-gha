@@ -1,10 +1,18 @@
 const jwt = require('jsonwebtoken');
 const ApiError = require('../errors/ApiError');
 
+/**
+ * Функция проверки авторизации пользователя
+ * @param req
+ * @param res
+ * @param next
+ * @returns {*}
+ */
 module.exports = (req, res, next) => {
   const { authorization } = req.headers;
-
+  // Если нет в заголовке авторизации или нет авторизации Bearer
   if (!authorization || !authorization.startsWith('Bearer ')) {
+    // Выведем ошибку 401
     return next(ApiError.Unauthorized('Необходима авторизация'));
   }
 

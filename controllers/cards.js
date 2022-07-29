@@ -59,14 +59,16 @@ module.exports.deleteCard = (req, res, next) => {
       if (!card) {
         return next(ApiError.NotFoundError('Карточка с указанным _id не найдена.'));
       }
+      // Если id пользователя не совпадает с id создателя карточки
       if (card.owner.toString() !== req.user._id.toString()) {
+        // Вернем ошибку
         return next(ApiError.Forbidden('Недостаточно прав'));
       }
+      // Если все в порядке, то удалим карточку
       return Card.findByIdAndRemove(id)
         .then((data) => res.send({ data }))
         .catch(next);
     })
-    // Иначе вызываем ошибку 500
     .catch((err) => {
       // Если ошибка относится к CastError
       if (err.name === 'CastError') {
