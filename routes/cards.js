@@ -10,7 +10,7 @@ const { createCardValidator, idValidator } = require('../validators/celebrate');
 
 router.post('/', createCardValidator, createCard);
 router.get('/', getCards);
-router.delete('/:cardId', idValidator, deleteCard);
+router.delete('/:id', idValidator, deleteCard);
 router.put('/:cardId/likes', idValidator, likeCard);
 router.delete('/:cardId/likes', idValidator, dislikeCard);
 

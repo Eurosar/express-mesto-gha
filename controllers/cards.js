@@ -51,19 +51,20 @@ module.exports.getCards = (req, res, next) => {
  */
 module.exports.deleteCard = (req, res, next) => {
   // Деструктурируем введенные параметры в командную строку
-  const { cardId } = req.params;
-  // Найдем и удалим нужную карточку по id
-  Card.findByIdAndRemove(
-    cardId,
-    { new: true },
-  )
+  const { id } = req.params;
+  // Найдем и удалим нужную карточку по id findByIdAndRemove
+  Card.findById(id)
     .then((card) => {
       // Если карточка не найдена, то возвращаем ошибку 404
       if (!card) {
         return next(ApiError.NotFoundError('Карточка с указанным _id не найдена.'));
       }
-      // Если найдена, то возвращаем статус 200 (status 200 по умолчанию)
-      return res.send({ data: card });
+      if (card.owner.toString() !== req.user._id.toString()) {
+        return next(ApiError.Forbidden('Недостаточно прав'));
+      }
+      return Card.findByIdAndRemove(id)
+        .then((data) => res.send({ data }))
+        .catch(next);
     })
     // Иначе вызываем ошибку 500
     .catch((err) => {
@@ -73,7 +74,7 @@ module.exports.deleteCard = (req, res, next) => {
         return next(ApiError.BadRequestError('Некорректный id пользователя'));
       }
       // Иначе возвращаем ошибку 500
-      return next(ApiError.InternalError('Произошла ошибка'));
+      return next(err);
     });
 };
 

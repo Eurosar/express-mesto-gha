@@ -70,9 +70,9 @@ module.exports.getUsers = (req, res, next) => {
  */
 module.exports.getUser = (req, res, next) => {
   // Деструктурируем введенные параметры в командную строку
-  const { userId } = req.params;
+  const { id } = req.params;
   // Найдем пользователя по id
-  User.findById(userId)
+  User.findById(id)
     .then((user) => {
       // Если пользователь не найден
       if (!user) {
