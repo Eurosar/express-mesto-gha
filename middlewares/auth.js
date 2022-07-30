@@ -9,14 +9,18 @@ const ApiError = require('../errors/ApiError');
  * @returns {*}
  */
 module.exports = (req, res, next) => {
-  const { authorization } = req.headers;
-  // Если нет в заголовке авторизации или нет авторизации Bearer
-  if (!authorization || !authorization.startsWith('Bearer ')) {
-    // Выведем ошибку 401
-    return next(ApiError.Unauthorized('Необходима авторизация'));
-  }
+  // Если токен сохраняется не в куки, то нужна будет следующая проверка
+  // const { authorization } = req.headers;
+  // // Если нет в заголовке авторизации или нет авторизации Bearer
+  // if (!authorization || !authorization.startsWith('Bearer ')) {
+  //   // Выведем ошибку 401
+  //   return next(ApiError.Unauthorized('Необходима авторизация'));
+  // }
+  //
+  // const token = authorization.replace('Bearer ', '');
 
-  const token = authorization.replace('Bearer ', '');
+  // Если токен сохраянется в куки, то нужно будет подключить в файле app.js cookieParser
+  const token = req.cookies.jwt;
   let payload;
 
   try {
